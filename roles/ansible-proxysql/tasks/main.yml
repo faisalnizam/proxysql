@@ -1,0 +1,9 @@
+---
+- include: check_vars.yml
+  tags:
+    - proxysql
+    - check
+
+- include: proxysql.yml
+  tags:
+    - proxysql

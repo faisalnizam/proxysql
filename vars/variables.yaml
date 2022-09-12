@@ -1,0 +1,59 @@
+---
+proxysql_mysql_servers:
+   - address: ""
+     port: 3306
+     hostgroup: 1
+     max_connections: 100
+   - address : "" 
+     port : 3306 
+     hostgroup : 2 
+     max_connections : 100 
+
+proxysql_mysql_users:
+   - username : "root"
+     password : ""
+     default_hostgroup : 1 
+     active : 1 
+
+proxysql_mysql_query_rules:
+  - match_pattern: "^SELECT .* FOR UPDATE$"
+    destination_hostgroup: 1
+    apply : 1
+    log : 1
+  - match_pattern: "^SELECT"
+    destination_hostgroup: 1
+    apply : 1
+    log : 1
+  - match_pattern : "^(?i)CREATE "
+    destination_hostgroup : 1
+    apply : 1
+    log : 1
+  - match_pattern : "^(?i)INSERT "
+    destination_hostgroup : 1
+    apply : 1
+    log : 1
+  - match_pattern : "^(?i)SELECT .*_tmp_"
+    destination_hostgroup : 1
+    apply : 1
+    log : 1
+  - match_pattern : "^(?i)SELECT "
+    destination_hostgroup : 2
+    apply : 1
+    log : 1
+  - match_pattern : "^(?i)UPDATE "
+    destination_hostgroup : 1
+    apply : 1
+    log : 1
+  - match_pattern : "^(?i)DELETE "
+    destination_hostgroup : 1
+    apply : 1
+    log : 1
+
+proxysql_create_cluster: true 
+proxysql_admin_user: "admin"
+proxysql_admin_password: ""
+proxysql_admin_interface: 0.0.0.0
+proxysql_admin_port: 6032
+proxysql_mysql_interface: 0.0.0.0
+proxysql_mysql_port: 6033
+

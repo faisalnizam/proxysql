@@ -1,0 +1,13 @@
+resource "local_file" "AnsibleInventory" {
+  content = templatefile("servers.tmpl",
+    {
+      private-dns = module.proxy_sql.private_dns,
+      private-ip  = module.proxy_sql.private_ip,
+      private-id  = module.proxy_sql.id
+    }
+  )
+  filename = "hosts.ini"
+}
+
+
+

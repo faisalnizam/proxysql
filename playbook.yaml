@@ -1,0 +1,8 @@
+- hosts: servers
+  gather_facts: no
+  become : yes 
+  roles:
+    - ansible-proxysql
+  vars_files:
+    - vars/variables.yaml
+

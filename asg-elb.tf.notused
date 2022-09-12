@@ -1,0 +1,163 @@
+/* module "asg" {
+
+
+  source = "../../modules/terraform-aws-asg/asg-rolling-deploy/"
+
+  providers = {
+    aws = aws.eyewa-uat
+  }
+
+
+
+  launch_configuration_name = aws_launch_configuration.launch_configuration.name
+  vpc_subnet_ids            = ["subnet-02b68abe50769ddc4", "subnet-0c87288570695befd"]
+
+  load_balancers = [aws_elb.load_balancer.name]
+
+  min_size         = 1
+  max_size         = 2
+  desired_capacity = 1
+  min_elb_capacity = 1
+  suspended_processes = [
+                          "Terminate",
+                          "ReplaceUnhealthy",
+                          "HealthCheck"
+                        ]
+
+  custom_tags = [
+    {
+      key                 = "uat"
+      value               = "consul"
+      propagate_at_launch = true
+    },
+  ]
+}
+
+
+resource "aws_launch_configuration" "launch_configuration" {
+  provider = aws.eyewa-uat
+
+  name_prefix          = "${local.name}-"
+  image_id             = local.consul_image_id
+  instance_type        = "t3.medium"
+  iam_instance_profile = aws_iam_instance_profile.instance_profile.name
+  security_groups      = [aws_security_group.lc_security_group.id]
+  user_data            = data.template_file.user_data.rendered
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+
+
+resource "aws_security_group" "lc_security_group" {
+  provider = aws.eyewa-uat
+
+  name        = "${local.name}-lc"
+  description = "Security group for the ${local.name} launch configuration"
+  vpc_id      = data.aws_vpc.vpc.id
+
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port       = local.server_port
+    to_port         = local.server_port
+    protocol        = "tcp"
+    security_groups = [aws_security_group.elb_security_group.id]
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+
+resource "aws_iam_instance_profile" "instance_profile" {
+  provider = aws.eyewa-uat
+
+  name = local.name
+  role = aws_iam_role.instance_role.name
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  provisioner "local-exec" {
+    command = "echo 'Sleeping for 15 seconds to work around IAM Instance Profile propagation bug in Terraform' && sleep 15"
+  }
+}
+
+resource "aws_iam_role" "instance_role" {
+  provider = aws.eyewa-uat
+
+  name               = local.name
+  assume_role_policy = data.aws_iam_policy_document.instance_role.json
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+
+resource "aws_elb" "load_balancer" {
+  provider = aws.eyewa-uat
+
+  name                        = "elb-${local.name}"
+  security_groups             = [aws_security_group.elb_security_group.id]
+  cross_zone_load_balancing   = true
+  connection_draining         = true
+  connection_draining_timeout = 300
+  #subnets                     = var.subnet_ids
+  subnets = ["subnet-02b68abe50769ddc4", "subnet-0c87288570695befd"]
+
+
+  health_check {
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 3
+    interval            = 10
+    target              = "HTTP:${local.server_port}/"
+  }
+
+  listener {
+    lb_port           = local.elb_port
+    lb_protocol       = "http"
+    instance_port     = local.server_port
+    instance_protocol = "http"
+  }
+}
+
+
+resource "aws_security_group" "elb_security_group" {
+  provider = aws.eyewa-uat
+
+  name        = "${local.name}-elb"
+  description = "Security group for the ${local.name} ELB"
+  vpc_id      = data.aws_vpc.vpc.id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = local.elb_port
+    to_port     = local.elb_port
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+*/

@@ -1,0 +1,93 @@
+/* data "aws_instance" "ec2info" {
+  provider = aws.eyewa-uat
+  for_each = {
+     for ic in range(local.count): ic => ic
+  }
+  instance_tags = {
+    Name = "*psqltg*"
+  }
+  instance_id = aws_instance.this[each.key].id
+} 
+
+
+module "nlb" {
+
+  providers = {
+    aws = aws.eyewa-uat
+  }
+
+
+  source = "../../modules/terraform-aws-alb/"
+
+  name = "proxysql-nlb"
+
+  load_balancer_type = "network"
+
+  vpc_id = data.aws_vpc.vpc.id
+  #  subnets = [element(data.aws_subnet_ids.subnet_ids.ids[*], 0), element(data.aws_subnet_ids.subnet_ids.ids[*], 1), element(data.aws_subnet_ids.subnet_ids.ids[*], 2)]
+  subnets = ["subnet-02b68abe50769ddc4", "subnet-0c87288570695befd"]
+
+
+  internal = true
+
+  target_groups = [
+    {
+      name_prefix      = "psqltg"
+      backend_protocol = "TCP"
+      backend_port     = 6033
+      target_type      = "instance"
+      preserve_client_ip = true
+      targets =  [
+        {
+          target_id = module.proxy_sql.id[0]
+          port      = lookup(var.nlb_listeners[0], "target_port")
+        },
+        {
+          target_id = module.proxy_sql.id[1]
+          port      = lookup(var.nlb_listeners[0], "target_port")
+        }
+        
+      ]
+      deregistration_delay = 10
+      health_check = {
+        protocol          = "TCP"
+        enabled           = true
+        target            = "TCP"
+        interval          = 30
+        port              = "22"
+        healthy_threshold = 3
+      }
+    }
+  ]
+
+
+  http_tcp_listeners = [
+    {
+      port               = 6033
+      protocol           = "TCP"
+      target_group_index = 0
+    }
+  ]
+
+  tags = {
+    Environment = "ProxySQL-NLB"
+  }
+}
+
+
+
+
+resource "aws_route53_record" "www-dev" {
+  provider = aws.eyewa-uat
+
+  zone_id = "Z01493432D6VD69QOE1MR"
+  name    = "uat-proxysql"
+  type    = "CNAME"
+  ttl     = "5"
+
+
+  records = [module.nlb.lb_dns_name]
+}
+
+*/ 
+
