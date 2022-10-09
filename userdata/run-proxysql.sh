@@ -44,7 +44,7 @@ consul {
   auth {
     enabled = false
   }
-  address = "uat-consul.eyewa.internal:8500"
+  address = "uat-consul.internal:8500"
   retry {
     enabled = true
     attempts = 12
